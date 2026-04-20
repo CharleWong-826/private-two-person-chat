@@ -10,6 +10,15 @@ const logoutButton = document.querySelector("#logout-button");
 const connectionStatus = document.querySelector("#connection-status");
 const installBanner = document.querySelector("#install-banner");
 const installButton = document.querySelector("#install-button");
+const adminButton = document.querySelector("#admin-button");
+const adminCard = document.querySelector("#admin-card");
+const adminForm = document.querySelector("#admin-form");
+const adminRoomCode = document.querySelector("#admin-room-code");
+const adminUser1Pass = document.querySelector("#admin-user1-pass");
+const adminUser2Pass = document.querySelector("#admin-user2-pass");
+const adminMessage = document.querySelector("#admin-message");
+const adminCancelButton = document.querySelector("#admin-cancel-button");
+const selfDestructToggle = document.querySelector("#self-destruct-toggle");
 
 let currentUser = null;
 let eventSource = null;
@@ -17,6 +26,9 @@ let knownMessageIds = new Set();
 let deferredInstallPrompt = null;
 let reconnectTimer = null;
 let unseenCount = 0;
+let currentSettings = null;
+let isOwner = false;
+const pendingEphemeralReads = new Set();
 
 function updateTitle() {
   document.title = unseenCount > 0 ? `(${unseenCount}) Catalog Chat` : "Catalog Chat";
@@ -64,16 +76,29 @@ function renderMessage(message, options = {}) {
   article.innerHTML = `
     <div class="meta">
       <span>${escapeHtml(message.sender)}</span>
-      <span>${formatTime(message.sentAt)}</span>
+      <span>${formatTime(message.sentAt)}${message.selfDestruct ? " · 阅后即焚" : ""}</span>
     </div>
     <div class="text">${escapeHtml(message.text).replaceAll("\n", "<br>")}</div>
   `;
+  article.dataset.messageId = message.id;
   messagesEl.appendChild(article);
   messagesEl.scrollTop = messagesEl.scrollHeight;
 
   if (!options.silent && document.visibilityState !== "visible" && message.sender !== currentUser) {
     unseenCount += 1;
     updateTitle();
+  }
+
+  if (message.selfDestruct && !mine) {
+    acknowledgeEphemeral(message.id);
+  }
+}
+
+function removeMessageBubble(messageId) {
+  knownMessageIds.delete(messageId);
+  const el = messagesEl.querySelector(`[data-message-id="${CSS.escape(messageId)}"]`);
+  if (el) {
+    el.remove();
   }
 }
 
@@ -109,6 +134,10 @@ function connectStream() {
     }
     if (payload.type === "message" && payload.message) {
       renderMessage(payload.message);
+      return;
+    }
+    if (payload.type === "message_deleted" && payload.messageId) {
+      removeMessageBubble(payload.messageId);
     }
   };
   eventSource.onerror = () => {
@@ -129,7 +158,10 @@ function connectStream() {
 async function loadMessages() {
   const data = await api("/api/messages");
   currentUser = data.username;
+  isOwner = Boolean(data.isOwner);
+  currentSettings = data.settings || null;
   chatTitle.textContent = `你好，${currentUser}`;
+  adminButton.classList.toggle("hidden", !isOwner);
   messagesEl.innerHTML = "";
   knownMessageIds = new Set();
   data.messages.forEach(message => renderMessage(message, { silent: true }));
@@ -139,6 +171,7 @@ async function loadMessages() {
 function showChat() {
   loginCard.classList.add("hidden");
   chatCard.classList.remove("hidden");
+  adminCard.classList.add("hidden");
   messageInput.focus();
 }
 
@@ -148,11 +181,42 @@ function showLogin() {
     eventSource = null;
   }
   currentUser = null;
+  currentSettings = null;
+  isOwner = false;
   updateConnectionStatus("未连接", "status-offline");
   knownMessageIds = new Set();
   messagesEl.innerHTML = "";
+  adminButton.classList.add("hidden");
+  adminCard.classList.add("hidden");
   loginCard.classList.remove("hidden");
   chatCard.classList.add("hidden");
+}
+
+function showAdmin() {
+  if (!isOwner) {
+    return;
+  }
+  adminMessage.textContent = "";
+  adminRoomCode.value = currentSettings?.roomCode || "";
+  adminUser1Pass.value = "";
+  adminUser2Pass.value = "";
+  chatCard.classList.add("hidden");
+  adminCard.classList.remove("hidden");
+}
+
+async function acknowledgeEphemeral(messageId) {
+  if (pendingEphemeralReads.has(messageId)) {
+    return;
+  }
+  pendingEphemeralReads.add(messageId);
+  try {
+    await api("/api/messages/read", {
+      method: "POST",
+      body: JSON.stringify({ messageId })
+    });
+  } catch {
+    pendingEphemeralReads.delete(messageId);
+  }
 }
 
 loginForm.addEventListener("submit", async event => {
@@ -188,7 +252,10 @@ composer.addEventListener("submit", async event => {
   try {
     const data = await api("/api/send", {
       method: "POST",
-      body: JSON.stringify({ text })
+      body: JSON.stringify({
+        text,
+        selfDestruct: selfDestructToggle.checked
+      })
     });
     renderMessage(data.message);
   } catch (error) {
@@ -206,6 +273,29 @@ messageInput.addEventListener("keydown", event => {
 logoutButton.addEventListener("click", async () => {
   await api("/api/logout", { method: "POST", body: "{}" });
   showLogin();
+});
+
+adminButton.addEventListener("click", showAdmin);
+adminCancelButton.addEventListener("click", showChat);
+
+adminForm.addEventListener("submit", async event => {
+  event.preventDefault();
+  adminMessage.textContent = "";
+  try {
+    const data = await api("/api/admin/update", {
+      method: "POST",
+      body: JSON.stringify({
+        roomCode: adminRoomCode.value.trim(),
+        user1Pass: adminUser1Pass.value,
+        user2Pass: adminUser2Pass.value
+      })
+    });
+    currentSettings = data.settings;
+    alert("设置已保存。现在需要重新登录。");
+    showLogin();
+  } catch (error) {
+    adminMessage.textContent = error.message;
+  }
 });
 
 messageInput.addEventListener("input", () => {
@@ -247,6 +337,8 @@ async function bootstrap() {
       return;
     }
     currentUser = me.username;
+    currentSettings = me.settings || null;
+    isOwner = Boolean(me.isOwner);
     await loadMessages();
     connectStream();
     showChat();

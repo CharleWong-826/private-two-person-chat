@@ -52,7 +52,10 @@
             <h2 id="chat-title">聊天中</h2>
             <div id="connection-status" class="status-dot status-connecting">连接中</div>
           </div>
-          <button id="logout-button" class="ghost">退出</button>
+          <div class="header-actions">
+            <button id="admin-button" class="ghost hidden">设置</button>
+            <button id="logout-button" class="ghost">退出</button>
+          </div>
         </header>
 
         <div id="messages" class="messages"></div>
@@ -60,9 +63,39 @@
         <form id="composer" class="composer">
           <textarea id="message-input" rows="1" maxlength="2000" placeholder="输入消息..."></textarea>
           <div class="composer-actions">
+            <label class="inline-check">
+              <input id="self-destruct-toggle" type="checkbox" />
+              <span>阅后即焚</span>
+            </label>
             <div id="composer-hint" class="composer-hint">回车发送，Shift+回车换行</div>
             <button type="submit" class="primary">发送</button>
           </div>
+        </form>
+      </section>
+
+      <section id="admin-card" class="card hidden">
+        <div class="eyebrow">Owner Settings</div>
+        <h2>管理员设置</h2>
+        <p class="subtle">只有第一个账号可以看到这里。改完后两个人都需要重新登录。</p>
+
+        <form id="admin-form" class="stack">
+          <label>
+            <span>房间口令</span>
+            <input id="admin-room-code" required />
+          </label>
+          <label>
+            <span>第一个账号的新密码</span>
+            <input id="admin-user1-pass" type="password" required />
+          </label>
+          <label>
+            <span>第二个账号的新密码</span>
+            <input id="admin-user2-pass" type="password" required />
+          </label>
+          <div class="row-actions">
+            <button type="submit" class="primary">保存设置</button>
+            <button id="admin-cancel-button" type="button" class="ghost">返回聊天</button>
+          </div>
+          <div id="admin-message" class="error"></div>
         </form>
       </section>
     </main>

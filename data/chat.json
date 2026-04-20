@@ -14,13 +14,27 @@
     }
   ],
   "sessions": {
-    "1bf2312cb3d0a88cc69f38b5d3d03602c2c07d14c2e95064": {
-      "username": "me",
-      "createdAt": "2026-04-19T05:22:43.714Z"
-    },
-    "4cd21b25075f9ab140ee8dac7bbb70784b45298207b42166": {
+    "3eb799f3ec27f19e4b627eb605e396b3e235c8272bb57be2": {
       "username": "friend",
-      "createdAt": "2026-04-19T05:30:36.235Z"
+      "createdAt": "2026-04-20T08:15:43.589Z"
+    },
+    "adb855f29e2efd9a4e844c21d3eed2b3e6710305d8a9144f": {
+      "username": "me",
+      "createdAt": "2026-04-20T08:15:44.643Z"
     }
+  },
+  "settings": {
+    "roomCode": "my-private-room-2",
+    "ownerUsername": "me",
+    "users": [
+      {
+        "username": "me",
+        "passcode": "111111x"
+      },
+      {
+        "username": "friend",
+        "passcode": "222222x"
+      }
+    ]
   }
 }
