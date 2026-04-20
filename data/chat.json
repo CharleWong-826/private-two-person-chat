@@ -1,0 +1,26 @@
+{
+  "messages": [
+    {
+      "id": "d242d0e1-347c-4053-8bde-4afc03d1eb58",
+      "sender": "me",
+      "text": "你好，这是测试消息",
+      "sentAt": "2026-04-19T05:22:58.142Z"
+    },
+    {
+      "id": "e1526837-1634-4ca7-adf7-424574f4febf",
+      "sender": "friend",
+      "text": "PWA 版本测试消息",
+      "sentAt": "2026-04-19T05:30:48.317Z"
+    }
+  ],
+  "sessions": {
+    "1bf2312cb3d0a88cc69f38b5d3d03602c2c07d14c2e95064": {
+      "username": "me",
+      "createdAt": "2026-04-19T05:22:43.714Z"
+    },
+    "4cd21b25075f9ab140ee8dac7bbb70784b45298207b42166": {
+      "username": "friend",
+      "createdAt": "2026-04-19T05:30:36.235Z"
+    }
+  }
+}

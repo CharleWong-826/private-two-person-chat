@@ -1,0 +1,9 @@
+{
+  "name": "private-two-person-chat",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A tiny mobile-friendly private chat for exactly two people.",
+  "scripts": {
+    "start": "node server.js"
+  }
+}

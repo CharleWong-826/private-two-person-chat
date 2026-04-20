@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Private Two-Person Chat</title>
+    <meta name="theme-color" content="#0f7b6c" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Catalog Chat" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/icon-192.svg" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <div id="install-banner" class="install-banner hidden">
+        <div>
+          <strong>可安装到手机桌面</strong>
+          <p>像 App 一样打开，下次进入更方便。</p>
+        </div>
+        <button id="install-button" class="primary small">安装</button>
+      </div>
+
+      <section id="login-card" class="card">
+        <div class="eyebrow">Private Chat</div>
+        <h1>只给两个人用的聊天工具</h1>
+        <p class="subtle">手机浏览器直接打开。输入房间口令和你的账号信息后进入聊天。</p>
+
+        <form id="login-form" class="stack">
+          <label>
+            <span>房间口令</span>
+            <input id="room-code" name="roomCode" placeholder="例如 my-private-room" required />
+          </label>
+          <label>
+            <span>用户名</span>
+            <input id="username" name="username" placeholder="me 或 friend" required />
+          </label>
+          <label>
+            <span>个人口令</span>
+            <input id="passcode" name="passcode" type="password" placeholder="输入口令" required />
+          </label>
+          <button type="submit" class="primary">进入聊天</button>
+          <div id="login-error" class="error"></div>
+        </form>
+      </section>
+
+      <section id="chat-card" class="chat hidden">
+        <header class="chat-header">
+          <div>
+            <div class="eyebrow">Secure-ish Tiny Chat</div>
+            <h2 id="chat-title">聊天中</h2>
+            <div id="connection-status" class="status-dot status-connecting">连接中</div>
+          </div>
+          <button id="logout-button" class="ghost">退出</button>
+        </header>
+
+        <div id="messages" class="messages"></div>
+
+        <form id="composer" class="composer">
+          <textarea id="message-input" rows="1" maxlength="2000" placeholder="输入消息..."></textarea>
+          <div class="composer-actions">
+            <div id="composer-hint" class="composer-hint">回车发送，Shift+回车换行</div>
+            <button type="submit" class="primary">发送</button>
+          </div>
+        </form>
+      </section>
+    </main>
+
+    <script src="/app.js"></script>
+  </body>
+  </html>

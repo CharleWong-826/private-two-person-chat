@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: private-two-person-chat
+    runtime: docker
+    plan: free
+    autoDeploy: true
+    healthCheckPath: /api/health
+    envVars:
+      - key: HOST
+        value: 0.0.0.0
+      - key: PORT
+        value: 8088
+      - key: TRUST_PROXY
+        value: "1"
+      - key: CHAT_ROOM_CODE
+        sync: false
+      - key: CHAT_USER1_NAME
+        sync: false
+      - key: CHAT_USER1_PASS
+        sync: false
+      - key: CHAT_USER2_NAME
+        sync: false
+      - key: CHAT_USER2_PASS
+        sync: false
