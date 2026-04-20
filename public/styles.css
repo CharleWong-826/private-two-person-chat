@@ -239,6 +239,15 @@ button.ghost {
   word-break: break-word;
 }
 
+.bubble-image {
+  display: block;
+  width: min(260px, 100%);
+  max-width: 100%;
+  border-radius: 14px;
+  margin-bottom: 8px;
+  background: rgba(0, 0, 0, 0.08);
+}
+
 .composer {
   display: grid;
   grid-template-columns: 1fr auto;
@@ -253,6 +262,34 @@ button.ghost {
   align-items: flex-end;
   justify-content: space-between;
   gap: 8px;
+}
+
+.image-preview {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.image-preview img {
+  width: 92px;
+  height: 92px;
+  object-fit: cover;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.pick-image-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(23, 35, 56, 0.08);
+  color: var(--text);
+  cursor: pointer;
 }
 
 .inline-check {

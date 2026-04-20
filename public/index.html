@@ -61,8 +61,16 @@
         <div id="messages" class="messages"></div>
 
         <form id="composer" class="composer">
+          <div id="image-preview" class="image-preview hidden">
+            <img id="image-preview-img" alt="preview" />
+            <button id="clear-image-button" type="button" class="ghost small">取消图片</button>
+          </div>
           <textarea id="message-input" rows="1" maxlength="2000" placeholder="输入消息..."></textarea>
           <div class="composer-actions">
+            <label class="pick-image-button">
+              <input id="image-input" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden />
+              <span>选图片</span>
+            </label>
             <label class="inline-check">
               <input id="self-destruct-toggle" type="checkbox" />
               <span>阅后即焚</span>

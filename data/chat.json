@@ -11,6 +11,19 @@
       "sender": "friend",
       "text": "PWA 版本测试消息",
       "sentAt": "2026-04-19T05:30:48.317Z"
+    },
+    {
+      "id": "18bd779f-e357-42c7-9fca-801574d2f477",
+      "sender": "me",
+      "text": "图片测试",
+      "image": {
+        "url": "/uploads/1776674679817-53898e0c-799e-4747-b9a2-caa1e40506c0.png",
+        "mimeType": "image/png",
+        "size": 68
+      },
+      "sentAt": "2026-04-20T08:44:39.817Z",
+      "selfDestruct": false,
+      "destroyedFor": []
     }
   ],
   "sessions": {
@@ -21,6 +34,14 @@
     "adb855f29e2efd9a4e844c21d3eed2b3e6710305d8a9144f": {
       "username": "me",
       "createdAt": "2026-04-20T08:15:44.643Z"
+    },
+    "c74fbd92b3f1fbf2046948a26c50ba58d4467114f3082b7c": {
+      "username": "me",
+      "createdAt": "2026-04-20T08:43:22.435Z"
+    },
+    "92dd866a9068f9fdc8fccfcf47729d61b6a53af8cd974122": {
+      "username": "friend",
+      "createdAt": "2026-04-20T08:43:24.153Z"
     }
   },
   "settings": {

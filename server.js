@@ -8,7 +8,9 @@ const HOST = process.env.HOST || "0.0.0.0";
 const PORT = Number(process.env.PORT || 8088);
 const DATA_DIR = path.join(__dirname, "data");
 const DB_PATH = path.join(DATA_DIR, "chat.json");
+const UPLOAD_DIR = path.join(DATA_DIR, "uploads");
 const PUBLIC_DIR = path.join(__dirname, "public");
+const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
 
 const CONFIG = {
   trustProxy: process.env.TRUST_PROXY === "1",
@@ -27,6 +29,7 @@ const CONFIG = {
 
 function ensureDataFile() {
   fs.mkdirSync(DATA_DIR, { recursive: true });
+  fs.mkdirSync(UPLOAD_DIR, { recursive: true });
   if (!fs.existsSync(DB_PATH)) {
     const initialUsers = CONFIG.users.map(user => ({
       username: user.username,
@@ -169,6 +172,49 @@ const sseClients = new Set();
 
 function sanitizeMessage(text) {
   return String(text || "").replace(/\r/g, "").trim().slice(0, 2000);
+}
+
+function ensureUploadsDir() {
+  fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+}
+
+function parseImageDataUrl(dataUrl) {
+  const match = String(dataUrl || "").match(/^data:(image\/(?:png|jpeg|jpg|webp|gif));base64,([A-Za-z0-9+/=]+)$/i);
+  if (!match) {
+    return null;
+  }
+  const mimeType = match[1].toLowerCase() === "image/jpg" ? "image/jpeg" : match[1].toLowerCase();
+  const base64 = match[2];
+  const buffer = Buffer.from(base64, "base64");
+  if (!buffer.length || buffer.length > MAX_IMAGE_BYTES) {
+    return null;
+  }
+  const ext = {
+    "image/png": ".png",
+    "image/jpeg": ".jpg",
+    "image/webp": ".webp",
+    "image/gif": ".gif"
+  }[mimeType];
+  if (!ext) {
+    return null;
+  }
+  return { mimeType, ext, buffer };
+}
+
+function saveUploadedImage(imageDataUrl) {
+  const parsed = parseImageDataUrl(imageDataUrl);
+  if (!parsed) {
+    return null;
+  }
+  ensureUploadsDir();
+  const filename = `${Date.now()}-${crypto.randomUUID()}${parsed.ext}`;
+  const filePath = path.join(UPLOAD_DIR, filename);
+  fs.writeFileSync(filePath, parsed.buffer);
+  return {
+    url: `/uploads/${filename}`,
+    mimeType: parsed.mimeType,
+    size: parsed.buffer.length
+  };
 }
 
 function getSettingsView(db) {
@@ -315,7 +361,11 @@ async function handleSend(req, res) {
   }
 
   const text = sanitizeMessage(payload.text);
-  if (!text) {
+  const image = payload.imageDataUrl ? saveUploadedImage(payload.imageDataUrl) : null;
+  if (payload.imageDataUrl && !image) {
+    return sendJson(res, 400, { error: "Image must be png, jpg, webp, or gif and under 4MB" });
+  }
+  if (!text && !image) {
     return sendJson(res, 400, { error: "Message cannot be empty" });
   }
   const selfDestruct = Boolean(payload.selfDestruct);
@@ -325,6 +375,7 @@ async function handleSend(req, res) {
     id: crypto.randomUUID(),
     sender: auth.username,
     text,
+    image,
     sentAt: new Date().toISOString(),
     selfDestruct,
     destroyedFor: []
@@ -461,6 +512,29 @@ function handleStream(req, res) {
 }
 
 function serveStatic(req, res, pathname) {
+  if (pathname.startsWith("/uploads/")) {
+    const uploadPath = path.normalize(path.join(UPLOAD_DIR, pathname.replace(/^\/uploads\//, "")));
+    if (!uploadPath.startsWith(UPLOAD_DIR)) {
+      return sendJson(res, 403, { error: "Forbidden" });
+    }
+    return fs.readFile(uploadPath, (err, data) => {
+      if (err) {
+        res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
+        res.end("Not found");
+        return;
+      }
+      const ext = path.extname(uploadPath).toLowerCase();
+      const contentType = {
+        ".png": "image/png",
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+        ".webp": "image/webp",
+        ".gif": "image/gif"
+      }[ext] || "application/octet-stream";
+      res.writeHead(200, { "Content-Type": contentType, "Cache-Control": "no-store" });
+      res.end(data);
+    });
+  }
   const filePath = pathname === "/" ? path.join(PUBLIC_DIR, "index.html") : path.join(PUBLIC_DIR, pathname);
   const normalized = path.normalize(filePath);
   if (!normalized.startsWith(PUBLIC_DIR)) {

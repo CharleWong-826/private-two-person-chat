@@ -19,6 +19,10 @@ const adminUser2Pass = document.querySelector("#admin-user2-pass");
 const adminMessage = document.querySelector("#admin-message");
 const adminCancelButton = document.querySelector("#admin-cancel-button");
 const selfDestructToggle = document.querySelector("#self-destruct-toggle");
+const imageInput = document.querySelector("#image-input");
+const imagePreview = document.querySelector("#image-preview");
+const imagePreviewImg = document.querySelector("#image-preview-img");
+const clearImageButton = document.querySelector("#clear-image-button");
 
 let currentUser = null;
 let eventSource = null;
@@ -29,6 +33,7 @@ let unseenCount = 0;
 let currentSettings = null;
 let isOwner = false;
 const pendingEphemeralReads = new Set();
+let selectedImageDataUrl = null;
 
 function updateTitle() {
   document.title = unseenCount > 0 ? `(${unseenCount}) Catalog Chat` : "Catalog Chat";
@@ -78,7 +83,8 @@ function renderMessage(message, options = {}) {
       <span>${escapeHtml(message.sender)}</span>
       <span>${formatTime(message.sentAt)}${message.selfDestruct ? " · 阅后即焚" : ""}</span>
     </div>
-    <div class="text">${escapeHtml(message.text).replaceAll("\n", "<br>")}</div>
+    ${message.image?.url ? `<img class="bubble-image" src="${escapeHtml(message.image.url)}" alt="chat image" loading="lazy" />` : ""}
+    ${message.text ? `<div class="text">${escapeHtml(message.text).replaceAll("\n", "<br>")}</div>` : ""}
   `;
   article.dataset.messageId = message.id;
   messagesEl.appendChild(article);
@@ -92,6 +98,13 @@ function renderMessage(message, options = {}) {
   if (message.selfDestruct && !mine) {
     acknowledgeEphemeral(message.id);
   }
+}
+
+function resetSelectedImage() {
+  selectedImageDataUrl = null;
+  imageInput.value = "";
+  imagePreviewImg.removeAttribute("src");
+  imagePreview.classList.add("hidden");
 }
 
 function removeMessageBubble(messageId) {
@@ -186,6 +199,7 @@ function showLogin() {
   updateConnectionStatus("未连接", "status-offline");
   knownMessageIds = new Set();
   messagesEl.innerHTML = "";
+  resetSelectedImage();
   adminButton.classList.add("hidden");
   adminCard.classList.add("hidden");
   loginCard.classList.remove("hidden");
@@ -244,7 +258,7 @@ loginForm.addEventListener("submit", async event => {
 composer.addEventListener("submit", async event => {
   event.preventDefault();
   const text = messageInput.value.trim();
-  if (!text) {
+  if (!text && !selectedImageDataUrl) {
     return;
   }
   messageInput.value = "";
@@ -254,9 +268,11 @@ composer.addEventListener("submit", async event => {
       method: "POST",
       body: JSON.stringify({
         text,
+        imageDataUrl: selectedImageDataUrl,
         selfDestruct: selfDestructToggle.checked
       })
     });
+    resetSelectedImage();
     renderMessage(data.message);
   } catch (error) {
     alert(error.message);
@@ -302,6 +318,33 @@ messageInput.addEventListener("input", () => {
   messageInput.style.height = "auto";
   messageInput.style.height = `${Math.min(messageInput.scrollHeight, 160)}px`;
 });
+
+imageInput.addEventListener("change", () => {
+  const [file] = imageInput.files || [];
+  if (!file) {
+    resetSelectedImage();
+    return;
+  }
+  if (!file.type.startsWith("image/")) {
+    alert("请选择图片文件");
+    resetSelectedImage();
+    return;
+  }
+  if (file.size > 4 * 1024 * 1024) {
+    alert("图片需要小于 4MB");
+    resetSelectedImage();
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    selectedImageDataUrl = String(reader.result || "");
+    imagePreviewImg.src = selectedImageDataUrl;
+    imagePreview.classList.remove("hidden");
+  };
+  reader.readAsDataURL(file);
+});
+
+clearImageButton.addEventListener("click", resetSelectedImage);
 
 window.addEventListener("beforeinstallprompt", event => {
   event.preventDefault();
